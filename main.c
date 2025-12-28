@@ -17,13 +17,12 @@ int main(void)
 
 
             /* Print snapshot once (snapshot was already captured by wrapper on '@' IRQ) */
-            send_snapshot("HALTED (software pause). Send # to resume\r\n");
+            send_snapshot("HALTED (software pause). Send # to resume\r\n the processor state is r0-r12,sp_active,lr, pc, xpsr,psp, msp,control,primask\r\n");
 
-            /* Pause here: sleep until an interrupt occurs */
+            /*  sleep until an interrupt occurs */
             while (dbg_paused)
             {
-                __asm volatile ("wfi");     // or __WFI() if you use CMSIS
-
+                __asm volatile ("wfi");     
                 if (dbg_resume_req)
                 {
                     dbg_resume_req = 0;
@@ -44,3 +43,4 @@ int main(void)
 
     }
 }
+
