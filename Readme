@@ -1,8 +1,3 @@
-UART-Triggered Mini Debugger (STM32F411) — README (TXT)
-====================================================
-
-One-line description
---------------------
 A learning project mini-debugger for STM32F411 that snapshots CPU state and pauses/resumes firmware using single-character UART commands.
 
 What it does
@@ -14,7 +9,7 @@ What it does
 - Send '#' over UART:
   - exits the halt and continues normal execution
 
-Why this design exists
+## Why this design exists
 ----------------------
 1) Cortex-M hardware stacking is incomplete
    On Cortex-M, interrupt entry automatically stacks only:
@@ -43,7 +38,7 @@ Why this design exists
    - ISR sets request flags (fast)
    - main loop performs the dump and pause logic (safe)
 
-Commands
+## Commands
 --------
 - '@' : snapshot + dump + enter paused state
 - '#' : resume from paused state
@@ -73,7 +68,7 @@ Two request flags provide a clean handoff from interrupt context to main context
 
 Request flags prevent long UART printing inside the ISR and keep interrupt latency predictable.
 
-Hardware wiring (USART2 on STM32F411)
+## Hardware wiring (USART2 on STM32F411)
 -------------------------------------
 Pins:
 - PA3 = USART2_RX  <- connect to USB-TTL TX
@@ -82,21 +77,56 @@ Pins:
 Logic level:
 - 3.3V TTL recommended (avoid 5V on STM32 pins)
 
-Build notes
+## Build notes
 -----------
 - Toolchain: STM32CubeIDE / GCC for ARM
 - Ensure the vector table resolves USART2_IRQHandler to the assembly wrapper.
 - Ensure ISR wrapper and snapshot assembly files are included in the build (not excluded).
 
-Output expectations
+ ## Output expectations
 -------------------
 Typical address patterns:
 - PC often appears as 0x0800xxxx (Flash region)
 - sp_active/frame pointer often appears as 0x2000xxxx (SRAM region)
 
-Limitations
------------
-- Software halt pauses at a safe scheduling point (main-loop service), not at an arbitrary instruction like a hardware SWD/JTAG debugger.
-- UART resume depends on UART interrupts remaining enabled during the PAUSED state.
+## What I learned / bugs I hit
+------------------------------
+
+Why capturing r4–r11 must happen before any C prologue touches registers.
+
+EXC_RETURN handling: LR in exception context is special; BL overwrites it.
+
+Why printing inside ISR is risky (latency, RX overrun, nested interrupt delays).
+
+## Common failure modes:
+-----------------------
+
+USART2_IRQHandler not mapped to wrapper (no capture / wrong behavior)
+
+Assembly files excluded from build (link succeeds but handler never used)
+
+Wrong baud/clock assumptions (garbled terminal output)
+
+PA2/PA3 wiring swapped / missing common GND
+
+## Limitations
+-------------------------
+
+Software halt is cooperative: pauses at main-loop service point, not arbitrary instruction.
+
+Resume depends on UART IRQ being enabled during PAUSED.
+
+Not a replacement for SWD/JTAG: no single-step, breakpoints, watchpoints, memory edits.
+
+## Future improvements
+-----------------------------
+
+Add a ring-buffered UART TX to avoid blocking print.
+
+Add a small command set: dump memory range, read/write variables, toggle a GPIO.
+
+Add “reason codes” (why paused) + a simple CRC for dump integrity.
+
+Add support for HardFault handler capture (crash snapshot workflow).
 
 
