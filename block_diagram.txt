@@ -1,0 +1,30 @@
+          UART RX (PA3)                       UART TX (PA2)
+                │                                 ▲
+                ▼                                 │
+      ┌─────────────────────┐        prints dump  │
+      │ USART2 IRQ Entry     │─────────────────────┘
+      │ ASM wrapper          │
+      │  - preserve LR       │
+      │  - detect MSP/PSP    │
+      │  - capture r4–r11    │
+      │  - pass frame ptr    │
+      └──────────┬──────────┘
+                 │ calls
+                 ▼
+      ┌─────────────────────┐
+      │ C IRQ handler         │
+      │  - read DR            │
+      │  - set dbg flags      │
+      └──────────┬──────────┘
+                 │ flags
+                 ▼
+      ┌─────────────────────┐
+      │ main() service loop  │
+      │  if dump_req:        │
+      │    print snapshot    │
+      │    state=PAUSED      │
+      │  if resume_req:      │
+      │    state=RUN         │
+      └──────────┬──────────┘
+                 ▼
+             WFI in PAUSED
