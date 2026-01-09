@@ -121,8 +121,6 @@ Not a replacement for SWD/JTAG: no single-step, breakpoints, watchpoints, memory
 ## Future improvements
 -----------------------------
 
-Add a ring-buffered UART TX to avoid blocking print.
-
 Add a small command set: dump memory range, read/write variables, toggle a GPIO.
 
 Add “reason codes” (why paused) + a simple CRC for dump integrity.
